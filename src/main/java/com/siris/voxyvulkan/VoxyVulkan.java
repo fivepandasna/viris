@@ -1,4 +1,4 @@
-package com.irisdlss.voxyvulkan;
+package com.siris.voxyvulkan;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.backend.vulkan.VulkanCommandEncoder;

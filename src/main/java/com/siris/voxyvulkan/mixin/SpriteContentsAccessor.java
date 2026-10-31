@@ -1,4 +1,4 @@
-package com.irisdlss.voxyvulkan.mixin;
+package com.siris.voxyvulkan.mixin;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.renderer.texture.SpriteContents;

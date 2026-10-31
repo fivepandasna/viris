@@ -1,6 +1,6 @@
-package com.irisdlss.voxyvulkan.mixin;
+package com.siris.voxyvulkan.mixin;
 
-import com.irisdlss.voxyvulkan.LodRenderer;
+import com.siris.voxyvulkan.LodRenderer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.multiplayer.ClientLevel;

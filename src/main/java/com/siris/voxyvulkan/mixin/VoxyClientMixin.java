@@ -1,6 +1,6 @@
-package com.irisdlss.voxyvulkan.mixin;
+package com.siris.voxyvulkan.mixin;
 
-import com.irisdlss.voxyvulkan.VoxyVulkan;
+import com.siris.voxyvulkan.VoxyVulkan;
 import me.cortex.voxy.client.VoxyClient;
 import me.cortex.voxy.client.VoxyClientInstance;
 import me.cortex.voxy.commonImpl.VoxyCommon;

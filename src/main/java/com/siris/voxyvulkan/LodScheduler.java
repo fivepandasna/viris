@@ -1,4 +1,4 @@
-package com.irisdlss.voxyvulkan;
+package com.siris.voxyvulkan;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;

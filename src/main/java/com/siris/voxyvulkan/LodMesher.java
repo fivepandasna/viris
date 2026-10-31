@@ -1,4 +1,4 @@
-package com.irisdlss.voxyvulkan;
+package com.siris.voxyvulkan;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

@@ -1,6 +1,6 @@
-package com.irisdlss.voxyvulkan.mixin;
+package com.siris.voxyvulkan.mixin;
 
-import com.irisdlss.voxyvulkan.LodRenderer;
+import com.siris.voxyvulkan.LodRenderer;
 import me.cortex.voxy.commonImpl.VoxyInstance;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

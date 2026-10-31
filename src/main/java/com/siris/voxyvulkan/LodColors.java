@@ -1,6 +1,6 @@
-package com.irisdlss.voxyvulkan;
+package com.siris.voxyvulkan;
 
-import com.irisdlss.voxyvulkan.mixin.SpriteContentsAccessor;
+import com.siris.voxyvulkan.mixin.SpriteContentsAccessor;
 import com.mojang.blaze3d.platform.NativeImage;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import java.lang.reflect.InvocationHandler;

@@ -1,7 +1,7 @@
-package com.irisdlss.voxyvulkan.mixin;
+package com.siris.voxyvulkan.mixin;
 
-import com.irisdlss.voxyvulkan.LodRenderer;
-import com.irisdlss.voxyvulkan.VoxyVulkan;
+import com.siris.voxyvulkan.LodRenderer;
+import com.siris.voxyvulkan.VoxyVulkan;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.commands.RenderPass;

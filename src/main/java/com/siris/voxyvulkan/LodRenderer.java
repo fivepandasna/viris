@@ -1,4 +1,4 @@
-package com.irisdlss.voxyvulkan;
+package com.siris.voxyvulkan;
 
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;

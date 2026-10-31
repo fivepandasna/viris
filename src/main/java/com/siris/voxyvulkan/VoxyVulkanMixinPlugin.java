@@ -1,4 +1,4 @@
-package com.irisdlss.voxyvulkan;
+package com.siris.voxyvulkan;
 
 import java.util.List;
 import java.util.Set;
@@ -101,7 +101,7 @@ public class VoxyVulkanMixinPlugin implements IMixinConfigPlugin {
             }
             LabelNode run = new LabelNode();
             InsnList check = new InsnList();
-            check.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "com/irisdlss/voxyvulkan/VoxyVulkan", "isVulkan", "()Z", false));
+            check.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "com/siris/voxyvulkan/VoxyVulkan", "isVulkan", "()Z", false));
             check.add(new JumpInsnNode(Opcodes.IFEQ, run));
             check.add(new InsnNode(Opcodes.RETURN));
             check.add(run);

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "voxy-vulkan",
+  "id": "viris",
   "version": "${version}",
-  "name": "Voxy Vulkan",
-  "description": "Runs Voxy's own LOD renderer on Minecraft's Vulkan renderer: Voxy draws through a hidden OpenGL context into images shared with Vulkan. Voxy itself is used unchanged, as installed by the player.",
+  "name": "VIRIS",
+  "description": "Voxy LODs on Minecraft's Vulkan renderer, with shader packs through Vitrail. Voxy's own renderer draws through a hidden OpenGL context into images shared with Vulkan; Voxy itself is used unchanged, as installed by the player.",
   "authors": [
     "laurensanp"
   ],
@@ -12,14 +12,15 @@
     "issues": "https://github.com/laurensanp/siris/issues"
   },
   "license": "MIT",
+  "icon": "assets/viris/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [
-      "com.siris.voxyvulkan.VoxyVulkan"
+      "com.siris.viris.Viris"
     ]
   },
   "mixins": [
-    "voxy-vulkan.mixins.json"
+    "viris.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.20.1",

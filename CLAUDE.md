@@ -113,7 +113,7 @@ IHYZKsvL, created 2026-11-01 by API, still waiting for review). New version: POS
 Fabric API required, Vitrail optional), then PATCH /v3/version `client_only`. Gallery: 4 images.
 
 Newest first:
-- v0.3.5 (2026-11-02): Vulkan first when the Graphics API option is on its default. Modrinth 4.
+- v0.3.5 (2026-11-02): Vulkan first when the Graphics API option is on its default. Modrinth TLmz6juf.
 - v0.3.4 (2026-11-02): own repo, package `com.viris`; no change in the game. Modrinth NbOJ6O8J.
 - v0.3.3 (2026-11-02): LODs survive shader reloads/toggles. Modrinth o1vibgM3.
 - v0.3.2 (2026-11-01): pack sees LOD depth only with colour; Voxy pipeline re-requested. Modrinth ieYulT8H.

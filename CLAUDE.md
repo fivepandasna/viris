@@ -9,8 +9,9 @@ Works with SIRIS (DLSS SR + FG, github.com/laurensanp/siris, local clone `../iri
 only as "works with"; no dependency in either direction. The one link in code: SIRIS checks `isModLoaded("viris")` and
 then keeps Vitrail's reload on join (SIRIS 1.1.4+).
 
-Without SIRIS nothing forces Vulkan: the game's default "Graphics API" means OpenGL here, Voxy then draws by itself and
-VIRIS does nothing (`preferredGraphicsBackend:"vulkan"` in `options.txt`).
+The game's default "Graphics API" tries OpenGL first; since 0.3.5 `PreferredGraphicsApiMixin` tries Vulkan first then
+(Windows, Voxy loaded), so VIRIS doesn't need SIRIS for that. An explicit `preferredGraphicsBackend:"opengl"` stays:
+Voxy draws by itself and VIRIS does nothing (tested 2026-11-02, also with SIRIS, which forces Vulkan either way).
 
 | Path | What |
 |---|---|
@@ -112,6 +113,7 @@ IHYZKsvL, created 2026-11-01 by API, still waiting for review). New version: POS
 Fabric API required, Vitrail optional), then PATCH /v3/version `client_only`. Gallery: 4 images.
 
 Newest first:
+- 0.3.5 (not released yet): Vulkan first when the Graphics API option is on its default.
 - v0.3.4 (2026-11-02): own repo, package `com.viris`; no change in the game. Modrinth NbOJ6O8J.
 - v0.3.3 (2026-11-02): LODs survive shader reloads/toggles. Modrinth o1vibgM3.
 - v0.3.2 (2026-11-01): pack sees LOD depth only with colour; Voxy pipeline re-requested. Modrinth ieYulT8H.

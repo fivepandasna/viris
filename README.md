@@ -43,9 +43,9 @@ Mods, all in `.minecraft/mods/` (or a Lunar profile's `mods/`):
 ## Install
 
 1. Put the mods above into `mods/`. Remove an old `voxy-vulkan-*.jar` (different mod id, both would load).
-2. Start the game and set **Video Settings → Graphics API** to **Vulkan**, then restart. With the default setting the
-   game starts on OpenGL, where Voxy draws by itself and VIRIS has nothing to do. A mod that starts the game on Vulkan
-   by itself saves you this step.
+2. Start the game. Since 0.3.5 it starts on **Vulkan** by itself when **Video Settings → Graphics API** is on its default
+   (before: set it to Vulkan yourself). If you choose OpenGL there, the game stays on OpenGL: Voxy draws by itself and
+   VIRIS has nothing to do. Do that if your driver lacks the interop, since the LODs stay off on Vulkan then.
 
 ## What works
 
@@ -61,7 +61,7 @@ Mods, all in `.minecraft/mods/` (or a Lunar profile's `mods/`):
 ## Works with
 
 [SIRIS](https://github.com/laurensanp/siris) (DLSS Super Resolution + Frame Generation): install it next to this mod if
-you want those. It is not required, and it starts the game on Vulkan by itself. Use SIRIS 1.1.4 or newer, older
+you want those. It is not required. Use SIRIS 1.1.4 or newer, older
 versions make the LODs lose their colour when you join a world a second time.
 
 ## Known issues
@@ -90,7 +90,7 @@ gradlew build                                             :: build\libs\viris-*.
 gradlew runClient --args="--quickPlaySingleplayer <world>"
 ```
 
-Set `preferredGraphicsBackend:"vulkan"` in `run/options.txt` for test runs. More background for contributors:
+More background for contributors:
 [`CLAUDE.md`](CLAUDE.md).
 
 ## License

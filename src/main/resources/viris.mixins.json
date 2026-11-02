@@ -12,6 +12,7 @@
     "LevelRendererMixin",
     "LightMapHelperMixin",
     "MinecraftMixin",
+    "PreferredGraphicsApiMixin",
     "RenderPipelineFactoryMixin",
     "RenderSystemMixin",
     "SodiumWorldRendererMixin",

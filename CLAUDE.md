@@ -5,7 +5,7 @@ game's Vulkan renderer through OpenGL interop. Own repo since 2026-11-02 (before
 history came along, older paths `voxy-vulkan/`, package `com.siris.viris`). Voxy is All-Rights-Reserved: never pack,
 commit or modify its jar (runtime mixins only). Vitrail (LGPL-3.0) is not ours either.
 
-Works with SIRIS (DLSS SR + FG, github.com/laurensanp/siris, local clone `../siris`), not required. Docs mention it
+Works with SIRIS (DLSS SR + FG, github.com/laurensanp/siris, local clone `../siris`), not required. Same repo layout and README sections as SIRIS, keep them that way. Docs mention it
 only as "works with"; no dependency in either direction. The one link in code: SIRIS checks `isModLoaded("viris")` and
 then keeps Vitrail's reload on join (SIRIS 1.1.4+).
 
@@ -15,14 +15,14 @@ Voxy draws by itself and VIRIS does nothing (tested 2026-11-02, also with SIRIS,
 
 | Path | What |
 |---|---|
-| `src/main/java/com/viris/` | `VoxyFrame` (the frame), `GlContext`, `Interop`, `AtlasReader`, `pack/` (shader packs), `mixin/` |
+| `mod/` | the Fabric mod (Java), same layout as SIRIS; `src/main/java/com/viris/`: `VoxyFrame` (the frame), `GlContext`, `Interop`, `AtlasReader`, `pack/` (shader packs), `mixin/` |
 | `libs/` (ignored) | compile-only jars: Voxy 0.2.20-beta, Sodium 0.9.2, Vitrail 0.13.0-beta (Modrinth) |
-| `run/` (ignored) | test game dir: Sodium, Fabric API, Voxy, optional Vitrail in `mods/`, `options.txt`, `saves/vulkan-test` |
+| `mod/run/` (ignored) | test game dir: Sodium, Fabric API, Voxy, optional Vitrail in `mods/`, `options.txt`, `saves/vulkan-test` |
 
 ## Build & test
 
-- Gradle needs **JDK 25**: `JAVA_HOME=~/.jdks/jdk-25.0.4.1+1`, use `--no-daemon`. `gradlew build` -> `build/libs/viris-*.jar`.
-- `gradlew runClient --no-daemon --args="--quickPlaySingleplayer vulkan-test"`. SIRIS' DevTest options don't exist here.
+- Gradle needs **JDK 25**: `JAVA_HOME=~/.jdks/jdk-25.0.4.1+1`, use `--no-daemon`. `cd mod && gradlew build` -> `mod/build/libs/viris-*.jar`.
+- `cd mod && gradlew runClient --no-daemon --args="--quickPlaySingleplayer vulkan-test"`. SIRIS' DevTest options don't exist here.
   For a screenshot use a temporary (never committed) `@Inject(method = "tick")` in `MinecraftMixin`: send commands with
   `mc.player.connection.sendCommand`, `Screenshot.grab(mc.gameDirectory, name, mc.gameRenderer.mainRenderTarget(), 1, ...)`
   at tick 500, `mc.stop()` later. Spectator at `-36 200 18 -90 25` shows the LODs. F2 sent from outside doesn't reach the game.

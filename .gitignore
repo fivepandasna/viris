@@ -1,6 +1,7 @@
 # build outputs
-build/
-.gradle/
-run/
+mod/build/
+mod/.gradle/
+mod/run/
 libs/
+.gradle/
 .idea/

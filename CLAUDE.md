@@ -5,7 +5,7 @@ game's Vulkan renderer through OpenGL interop. Own repo since 2026-11-02 (before
 history came along, older paths `voxy-vulkan/`, package `com.siris.viris`). Voxy is All-Rights-Reserved: never pack,
 commit or modify its jar (runtime mixins only). Vitrail (LGPL-3.0) is not ours either.
 
-Works with SIRIS (DLSS SR + FG, github.com/laurensanp/siris, local clone `../iris-dlss`), not required. Docs mention it
+Works with SIRIS (DLSS SR + FG, github.com/laurensanp/siris, local clone `../siris`), not required. Docs mention it
 only as "works with"; no dependency in either direction. The one link in code: SIRIS checks `isModLoaded("viris")` and
 then keeps Vitrail's reload on join (SIRIS 1.1.4+).
 
@@ -26,7 +26,7 @@ Voxy draws by itself and VIRIS does nothing (tested 2026-11-02, also with SIRIS,
   For a screenshot use a temporary (never committed) `@Inject(method = "tick")` in `MinecraftMixin`: send commands with
   `mc.player.connection.sendCommand`, `Screenshot.grab(mc.gameDirectory, name, mc.gameRenderer.mainRenderTarget(), 1, ...)`
   at tick 500, `mc.stop()` later. Spectator at `-36 200 18 -90 25` shows the LODs. F2 sent from outside doesn't reach the game.
-- One run at render distance 32 so Voxy ingests, then lower it. To test with SIRIS use its test loop (`../iris-dlss`).
+- One run at render distance 32 so Voxy ingests, then lower it. To test with SIRIS use its test loop (`../siris`).
 
 ## Notes
 
@@ -107,7 +107,7 @@ Voxy draws by itself and VIRIS does nothing (tested 2026-11-02, also with SIRIS,
 `"C:\Program Files\GitHub CLI\gh.exe" release create <tag> <jar> -R laurensanp/viris --title "VIRIS <version> (Minecraft 26.3)"
 --latest --notes-file <file>`. Only this mod's jar; Voxy and Vitrail are never attached.
 
-Modrinth (token `MODRINTH_TOKEN` in `.env` of `../iris-dlss`, API v2, header `Authorization: <token>`): `viris` (id
+Modrinth (token `MODRINTH_TOKEN` in `.env` of `../siris`, API v2, header `Authorization: <token>`): `viris` (id
 IHYZKsvL, created 2026-11-01 by API, still waiting for review). New version: POST /v2/version multipart (`data` JSON +
 `file`; version_type release, game_versions 26.3, loaders fabric, featured; deps: Voxy 0.2.20 version iIrM8ZKQ, Sodium,
 Fabric API required, Vitrail optional), then PATCH /v3/version `client_only`. Gallery: 4 images.

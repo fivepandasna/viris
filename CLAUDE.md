@@ -112,7 +112,7 @@ IHYZKsvL, created 2026-11-01 by API, still waiting for review). New version: POS
 Fabric API required, Vitrail optional), then PATCH /v3/version `client_only`. Gallery: 4 images.
 
 Newest first:
-- v0.3.4 (2026-11-02): own repo, package `com.viris`; no change in the game. Modrinth @@MR_VIRIS@@.
+- v0.3.4 (2026-11-02): own repo, package `com.viris`; no change in the game. Modrinth NbOJ6O8J.
 - v0.3.3 (2026-11-02): LODs survive shader reloads/toggles. Modrinth o1vibgM3.
 - v0.3.2 (2026-11-01): pack sees LOD depth only with colour; Voxy pipeline re-requested. Modrinth ieYulT8H.
 - v0.3.1 (2026-11-01): no ghost LODs after Voxy is switched off. Modrinth auUQfWsM.

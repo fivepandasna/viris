@@ -8,15 +8,15 @@
     "laurensanp"
   ],
   "contact": {
-    "sources": "https://github.com/laurensanp/siris",
-    "issues": "https://github.com/laurensanp/siris/issues"
+    "sources": "https://github.com/laurensanp/viris",
+    "issues": "https://github.com/laurensanp/viris/issues"
   },
   "license": "MIT",
   "icon": "assets/viris/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [
-      "com.siris.viris.Viris"
+      "com.viris.Viris"
     ]
   },
   "mixins": [

@@ -1,8 +1,8 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "com.siris.viris.mixin",
-  "plugin": "com.siris.viris.VirisMixinPlugin",
+  "package": "com.viris.mixin",
+  "plugin": "com.viris.VirisMixinPlugin",
   "compatibilityLevel": "JAVA_25",
   "client": [
     "DefaultChunkRendererMixin",

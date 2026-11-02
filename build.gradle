@@ -2,8 +2,8 @@ plugins {
 	id 'net.fabricmc.fabric-loom' version "1.19-SNAPSHOT"
 }
 
-version = "0.3.3+mc26.3"
-group = "com.siris"
+version = "0.3.4+mc26.3"
+group = "com.viris"
 
 dependencies {
 	minecraft "com.mojang:minecraft:26.3"

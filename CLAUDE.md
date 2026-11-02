@@ -110,7 +110,7 @@ Voxy draws by itself and VIRIS does nothing (tested 2026-11-02, also with SIRIS,
 Modrinth (token `MODRINTH_TOKEN` in `.env` of `../siris`, API v2, header `Authorization: <token>`): `viris` (id
 IHYZKsvL, created 2026-11-01 by API, still waiting for review). New version: POST /v2/version multipart (`data` JSON +
 `file`; version_type release, game_versions 26.3, loaders fabric, featured; deps: Voxy 0.2.20 version iIrM8ZKQ, Sodium,
-Fabric API required, Vitrail optional), then PATCH /v3/version `client_only`. Gallery: 4 images.
+Fabric API required, Vitrail optional), then PATCH /v3/version `client_only`. Gallery: 4 images (retaken 2026-11-02 with DLSS model M; dev world, `gamemode spectator`, `tp @p 0 130 0 -90 10` at time 2000, compare shot without the Voxy and VIRIS jars).
 
 Newest first:
 - v0.3.5 (2026-11-02): Vulkan first when the Graphics API option is on its default. Modrinth TLmz6juf.

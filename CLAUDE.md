@@ -94,7 +94,17 @@ GitHub has no API for it: upload by hand in the repo's Settings, Social preview.
   than before, as under Iris. (2) Translucents were drawn after deferred (a split added that morning), but packs fog LOD water
   in deferred (no DoFog in voxy_translucent): water stays in target 0 and goes through deferred again, as under Iris.
   Seam and clear reflections gone with Unbound, Reimagined; not tested on the user's server. Seen, unchanged by this (same with the old jar):
-  with Solas + Voxy all water is milky pale blue and the far terrain isn't fogged like without Voxy (compare no Voxy, RD 16); thin dark lines at the horizon.
+  with Solas + Voxy all water is milky pale blue and the far terrain isn't fogged like without Voxy (compare no Voxy, RD 16).
+  Thin dark lines through LOD water along the section grid, stepped (same day, user's Lunar shot; the old "Open" item above): Voxy's
+  quad_util scales a top's indentation with the voxel (`quadStart*lodScale`: water 1/8 block at level 0, 2/8, 4/8...), and a voxel of a coarse
+  level ends above the real water, so the sea steps by level (sea top 63: 62.875, 63.75, 63.5, 63, 62...). Where the farther part is
+  higher its front shows. Debug colours per face in the translucent patch: red/green on the lines; without the side faces the lines
+  became holes to the sky, proof of the step. `ShaderLoaderMixin` (text patch of ShaderLoader.parse) puts translucent indented tops of
+  level >= 1 at voxel top - 1 - indent = 62.875 at every level, side faces capped there (`maxY`); `RenderDataFactoryMixin` drops water's
+  side faces on section borders, they showed through the surface. Works without a pack too (not looked at). Tried: shading the fronts as surface
+  (face = 1) and forcing them opaque, both left lines. Limits: water tops not at an even height still step, by less than before, and
+  there the missing sides can show a hole (no lake seen yet). A short line stays in shallow water (y 668 in the dev view -36 110 18 180 6): stays
+  with all water sides removed, gone with real chunks, probably the LOD seabed's own step seen through the water.
  Exceptions in these hooks would stop Vitrail:
   they only switch the LODs off.
   Ghost LODs (0.3.1, 2026-11-01, user's server shot): switching Voxy off in its settings calls

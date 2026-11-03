@@ -66,6 +66,34 @@ public final class DepthConvert {
         GL45C.glBindFramebuffer(GL45C.GL_FRAMEBUFFER, 0);
     }
 
+    /** {@link #run} in the middle of Voxy's pipeline, which goes on with the GL state it had set up. */
+    public static void runKeepingState(int source, int target, int width, int height) {
+        int framebuffer = GL45C.glGetInteger(GL45C.GL_DRAW_FRAMEBUFFER_BINDING);
+        int program = GL45C.glGetInteger(GL45C.GL_CURRENT_PROGRAM);
+        int vertexArray = GL45C.glGetInteger(GL45C.GL_VERTEX_ARRAY_BINDING);
+        int[] viewport = new int[4];
+        GL45C.glGetIntegerv(GL45C.GL_VIEWPORT, viewport);
+        boolean depth = GL45C.glIsEnabled(GL45C.GL_DEPTH_TEST);
+        boolean stencil = GL45C.glIsEnabled(GL45C.GL_STENCIL_TEST);
+        boolean blend = GL45C.glIsEnabled(GL45C.GL_BLEND);
+        run(source, target, width, height);
+        GL45C.glBindFramebuffer(GL45C.GL_FRAMEBUFFER, framebuffer);
+        GL45C.glUseProgram(program);
+        GL45C.glBindVertexArray(vertexArray);
+        GL45C.glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+        setEnabled(GL45C.GL_DEPTH_TEST, depth);
+        setEnabled(GL45C.GL_STENCIL_TEST, stencil);
+        setEnabled(GL45C.GL_BLEND, blend);
+    }
+
+    private static void setEnabled(int capability, boolean enabled) {
+        if (enabled) {
+            GL45C.glEnable(capability);
+        } else {
+            GL45C.glDisable(capability);
+        }
+    }
+
     private static int shader(int type, String source) {
         int shader = GL45C.glCreateShader(type);
         GL45C.glShaderSource(shader, source);

@@ -153,6 +153,29 @@ public final class VitrailBridge {
         }
     }
 
+    /** The colour target {@code index} as the first composite pass reads it: where translucents draw. */
+    public static GpuTextureView targetAfterDeferred(int index) {
+        if (!resolve()) {
+            return null;
+        }
+        try {
+            Object chain = active.get(null);
+            if (chain == null) {
+                return null;
+            }
+            Object colorTargets = targets.get(chain);
+            for (Object step : (List<?>) steps.invoke(schedule.invoke(colorTargets))) {
+                if ((boolean) stepFullscreen.invoke(step) && ((String) stepProgram.invoke(step)).startsWith("composite")) {
+                    Object found = surface.invoke(colorTargets, index, stepRead.invoke(step, index));
+                    return found == null ? null : (GpuTextureView) surfaceView.invoke(found);
+                }
+            }
+            return null;
+        } catch (ReflectiveOperationException e) {
+            return null;
+        }
+    }
+
     /** block.properties ids per block state, as Iris hands them to Voxy. */
     @SuppressWarnings("unchecked")
     public static Object2IntMap<BlockState> blockIds() {

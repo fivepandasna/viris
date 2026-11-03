@@ -2,17 +2,23 @@ package com.viris.pack;
 
 import com.viris.VoxyFrame;
 import com.viris.Viris;
+import dev.vitrail.pack.source.OpenedPack;
 import dev.vitrail.uniform.UniformCatalog;
 import dev.vitrail.uniform.UniformShape;
 import dev.vitrail.uniform.UniformSource;
 import dev.vitrail.uniform.Val;
 import dev.vitrail.uniform.WorldState;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.IntConsumer;
 import java.util.function.LongConsumer;
@@ -22,6 +28,8 @@ import org.joml.Matrix3fc;
 import org.joml.Matrix4fc;
 import org.lwjgl.opengl.ARBDrawBuffersBlend;
 import org.lwjgl.opengl.GL45C;
+import org.lwjgl.stb.STBImage;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import sun.misc.Unsafe;
 
@@ -45,6 +53,8 @@ public final class PackPipeline {
     public final int height;
     /** Voxy's depth for the patch's own vxDepthTex samplers, converted to the depth packs expect (1 = far). */
     public final int patchDepth;
+    /** Colour targets of the pack the patch reads (reflections): copied from Vulkan, see VoxyFrame.copyPackInputs. */
+    public final List<Integer> inputTargets = new ArrayList<>();
     private final IrisVoxyRenderPipelineData data;
     private final List<Integer> dummies = new ArrayList<>();
 
@@ -76,6 +86,16 @@ public final class PackPipeline {
 
     public IrisVoxyRenderPipelineData data() {
         return data;
+    }
+
+    /** Index of colour target 0 (the picture) in {@link #targets}, or -1. */
+    public int colourIndex() {
+        for (int i = 0; i < targets.length; i++) {
+            if (targets[i] == 0) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     public int glTextureFor(int target) {
@@ -287,13 +307,23 @@ public final class PackPipeline {
         return new IrisVoxyRenderPipelineData.ImageSet(layout.toString(), binding);
     }
 
-    /** Pack textures aren't shared with GL yet: depth reads see the far plane, shadows see lit, colours black. */
+    /** Shadow maps and depthtex aren't shared with GL: depth reads see the far plane, shadows see lit. */
     private java.util.function.IntSupplier textureFor(String name, String type) {
         if (name.startsWith("vxDepthTex")) {
             return () -> patchDepth;
         }
         if (name.equals("lightmap")) {
             return VoxyFrame::lightmapGlTexture;
+        }
+        int image = customTexture(name.equals("noisetex") ? "texture.noise" : "texture.gbuffers." + name);
+        if (image != 0) {
+            return () -> image;
+        }
+        int input = colourTarget(name);
+        if (input >= 0) {
+            inputTargets.add(input);
+            int index = inputTargets.size() - 1;
+            return () -> VoxyFrame.packInputGlTexture(index);
         }
         if (type.contains("Shadow")) {
             int depth = dummyDepth(1.0F);
@@ -309,6 +339,74 @@ public final class PackPipeline {
         }
         int black = dummy(GL45C.GL_RGBA8, new float[] {0, 0, 0, 0});
         return () -> black;
+    }
+
+    /** The colour target a sampler name stands for (colortex19, gaux2 = colortex5), or -1. */
+    private static int colourTarget(String name) {
+        try {
+            if (name.startsWith("colortex")) {
+                return Integer.parseInt(name.substring(8));
+            }
+            if (name.startsWith("gaux")) {
+                return Integer.parseInt(name.substring(4)) + 3;
+            }
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+        return -1;
+    }
+
+    /** A PNG the pack's shaders.properties names under {@code key} (noise, water normals), or 0. */
+    private int customTexture(String key) {
+        ByteBuffer pixels = null;
+        try (OpenedPack opened = OpenedPack.open(pack.path(), pack.chosen(), pack.profile());
+             MemoryStack stack = MemoryStack.stackPush()) {
+            String file = null;
+            for (String place : List.of("shaders.properties", "shaders/shaders.properties")) {
+                Optional<Path> properties = opened.source().file(place);
+                if (properties.isPresent()) {
+                    file = java.nio.file.Files.readAllLines(properties.get()).stream()
+                        .map(String::strip).filter(line -> line.startsWith(key + "="))
+                        .map(line -> line.substring(line.indexOf('=') + 1).strip()).findFirst().orElse(null);
+                    break;
+                }
+            }
+            if (file == null) {
+                return 0;
+            }
+            Optional<Path> image = opened.source().file(file);
+            if (image.isEmpty()) {
+                image = opened.source().file("shaders/" + file);
+            }
+            if (image.isEmpty()) {
+                return 0;
+            }
+            byte[] bytes = java.nio.file.Files.readAllBytes(image.get());
+            ByteBuffer encoded = MemoryUtil.memAlloc(bytes.length).put(bytes).flip();
+            IntBuffer width = stack.mallocInt(1);
+            IntBuffer height = stack.mallocInt(1);
+            pixels = STBImage.stbi_load_from_memory(encoded, width, height, stack.mallocInt(1), 4);
+            MemoryUtil.memFree(encoded);
+            if (pixels == null) {
+                return 0;
+            }
+            int texture = texture(GL45C.GL_RGBA8, width.get(0), height.get(0));
+            GL45C.glTextureSubImage2D(texture, 0, 0, 0, width.get(0), height.get(0), GL45C.GL_RGBA,
+                GL45C.GL_UNSIGNED_BYTE, pixels);
+            GL45C.glTextureParameteri(texture, GL45C.GL_TEXTURE_MIN_FILTER, GL45C.GL_LINEAR);
+            GL45C.glTextureParameteri(texture, GL45C.GL_TEXTURE_MAG_FILTER, GL45C.GL_LINEAR);
+            GL45C.glTextureParameteri(texture, GL45C.GL_TEXTURE_WRAP_S, GL45C.GL_REPEAT);
+            GL45C.glTextureParameteri(texture, GL45C.GL_TEXTURE_WRAP_T, GL45C.GL_REPEAT);
+            dummies.add(texture);
+            return texture;
+        } catch (IOException | RuntimeException e) {
+            Viris.LOGGER.warn("VIRIS: the pack's {} could not be read", key, e);
+            return 0;
+        } finally {
+            if (pixels != null) {
+                STBImage.stbi_image_free(pixels);
+            }
+        }
     }
 
     private int dummy(int format, float[] value) {

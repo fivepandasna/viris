@@ -14,4 +14,9 @@ public class PackChainMixin {
     private static void viris$lodGbuffer(CallbackInfo ci) {
         VoxyFrame.packComposite();
     }
+
+    @Inject(method = "drawBeforeTranslucents", at = @At("TAIL"))
+    private static void viris$lodTranslucents(CallbackInfo ci) {
+        VoxyFrame.packTranslucents();
+    }
 }

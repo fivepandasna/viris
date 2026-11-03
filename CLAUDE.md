@@ -107,6 +107,13 @@ GitHub has no API for it: upload by hand in the repo's Settings, Social preview.
   with all water sides removed, gone with real chunks, probably the LOD seabed's own step seen through the water.
  Exceptions in these hooks would stop Vitrail:
   they only switch the LODs off.
+  Hard edge at the render distance, near water dark/see-through, LOD water hazy (2026-11-03, user's Lunar shots, flying high; NOT fixed): only
+  with the camera above the clouds. Reproduced in dev with the user's world (Unbound, RD 12): y 200 pitch 40 edge, y 165 none, y 200 with
+  `CLOUD_STYLE_DEFINE=0` none, with `CLOUD_ALT1=400 CLOUD_ALT2=496` none; rain, mods, LOD data, atmospheric fog not the cause. gbuffers_water
+  discards water when `colortex5.a` (cloud distance, set where cloud alpha > 0.5) is nearer than the water; LOD water sits in the target
+  before deferred and gets the clouds on top. Tried in temporary pack copies: no discard (water everywhere, near clearer than far), alpha * 0.35 under cloud
+  (edge stays); same discard in the LOD patch (gaux2.a; hardly changed anything, reverted). A real fix needs the cloud's alpha in near water. Debug pack idea
+  that ruled out wrong depth in Lunar: gbuffers_water writing depthtex1 = far (r), vxDepthTexOpaque 0/far (g), water depth bands (b): same in Lunar and dev.
   Ghost LODs (0.3.1, 2026-11-01, user's server shot): switching Voxy off in its settings calls
   `voxy$shutdownRenderer`, `IVoxyRenderSystemHolder.getNullable()` turns null and VoxyFrame drew nothing, but
   `packReadSet` kept the last set, so the pack's vxDepthTex still saw LOD depth and shaded grey terrain outlines over

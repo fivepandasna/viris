@@ -83,12 +83,19 @@ GitHub has no API for it: upload by hand in the repo's Settings, Social preview.
   maps and depthtex for the patch (dummies: LODs get no shadows), renderToVanillaDepth packs.
   LOD water (2026-11-03, user: "after the line it is just blue", black line at the LOD start): the translucent patch had
   an empty vxDepthTex, black noisetex and reflection colours. Now: `postOpaquePreTranslucent` TAIL converts Voxy's opaque
-  depth into `patchDepth` and moves the opaque colour into the set, translucents draw over nothing into
-  `packTranslucent` and go over the lit scene at `drawBeforeTranslucents` TAIL (before deferred they were fogged twice);
-  noisetex and `texture.gbuffers.*` PNGs come from the pack (`customTexture`); other colortexN/gauxN samplers are copied
-  from Vulkan after deferred into `packInputs` and read when the set comes round (3 frames old, so reflections lag slightly
-  in motion). Black shores were reflections of black. Left: a faint brightness step at the render distance edge
-  with Complementary; horizon lines not seen again from y 72/110 by day or at night. Exceptions in these hooks would stop Vitrail:
+  depth into `patchDepth`; noisetex and `texture.gbuffers.*` PNGs come from the pack (`customTexture`); other colortexN/gauxN
+  samplers are copied from Vulkan after deferred into `packInputs` and read when the set comes round (3 frames old, so
+  reflections lag slightly in motion). Black shores were reflections of black.
+  Seam at the render distance + far water/reflections clearer than the fogged terrain (same day, user's shots, Unbound at
+  sunset, reproduced in dev from y 110 pitch 35, `time set 11800` every tick, RD 8 vs 16 of the same spot): two causes. (1) Vitrail
+  binds a black stand-in for `vxDepthTexOpaque` in geometry programs ("read one pixel, because nothing fills them yet"), and
+  the pack's gbuffers_water takes min(depthtex1, LOD depth), so all normal water counted as 0 deep: alpha 0.25, nearly clear
+  whatever the depth. `GeometryProgramMixin` binds the real one (far before the composite). So near water is deeper in colour
+  than before, as under Iris. (2) Translucents were drawn after deferred (a split added that morning), but packs fog LOD water
+  in deferred (no DoFog in voxy_translucent): water stays in target 0 and goes through deferred again, as under Iris.
+  Seam and clear reflections gone with Unbound, Reimagined; not tested on the user's server. Seen, unchanged by this (same with the old jar):
+  with Solas + Voxy all water is milky pale blue and the far terrain isn't fogged like without Voxy (compare no Voxy, RD 16); thin dark lines at the horizon.
+ Exceptions in these hooks would stop Vitrail:
   they only switch the LODs off.
   Ghost LODs (0.3.1, 2026-11-01, user's server shot): switching Voxy off in its settings calls
   `voxy$shutdownRenderer`, `IVoxyRenderSystemHolder.getNullable()` turns null and VoxyFrame drew nothing, but

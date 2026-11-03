@@ -16,7 +16,7 @@ public class PackChainMixin {
     }
 
     @Inject(method = "drawBeforeTranslucents", at = @At("TAIL"))
-    private static void viris$lodTranslucents(CallbackInfo ci) {
-        VoxyFrame.packTranslucents();
+    private static void viris$packInputs(CallbackInfo ci) {
+        VoxyFrame.packInputs();
     }
 }

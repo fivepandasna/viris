@@ -170,15 +170,13 @@ public final class VoxyFrame {
 
         /** Shader pack mode: copies of the colour targets Voxy's pack patch wrote, and its depth (far = 1). */
         Interop.SharedTexture[] packTargets;
-        /** The patch's translucents alone (premultiplied): they go over the lit scene after the deferred passes. */
-        Interop.SharedTexture packTranslucent;
         /** The pack's colour targets its Voxy patch reads, from when this set was last composited. */
         Interop.SharedTexture[] packInputs = new Interop.SharedTexture[0];
         Interop.SharedTexture vxOpaque;
         Interop.SharedTexture vxTrans;
 
         int[] glTextures() {
-            int extra = packTargets == null ? 0 : packTargets.length + 3 + packInputs.length;
+            int extra = packTargets == null ? 0 : packTargets.length + 2 + packInputs.length;
             int[] out = new int[3 + extra];
             out[0] = color.glTexture();
             out[1] = depth.glTexture();
@@ -189,9 +187,8 @@ public final class VoxyFrame {
                 }
                 out[3 + packTargets.length] = vxOpaque.glTexture();
                 out[4 + packTargets.length] = vxTrans.glTexture();
-                out[5 + packTargets.length] = packTranslucent.glTexture();
                 for (int i = 0; i < packInputs.length; i++) {
-                    out[6 + packTargets.length + i] = packInputs[i].glTexture();
+                    out[5 + packTargets.length + i] = packInputs[i].glTexture();
                 }
             }
             return out;
@@ -221,7 +218,6 @@ public final class VoxyFrame {
             for (int i = 0; i < inputs; i++) {
                 packInputs[i] = Interop.createTexture("Voxy pack input", usage, GpuFormat.RGBA16_FLOAT, GL45C.GL_RGBA16F, width, height);
             }
-            packTranslucent = Interop.createTexture("Voxy pack translucent", usage, GpuFormat.RGBA16_FLOAT, GL45C.GL_RGBA16F, width, height);
             vxOpaque = Interop.createTexture("Voxy depth opaque", usage, GpuFormat.R32_FLOAT, GL45C.GL_R32F, width, height);
             vxTrans = Interop.createTexture("Voxy depth translucent", usage, GpuFormat.R32_FLOAT, GL45C.GL_R32F, width, height);
         }
@@ -235,7 +231,6 @@ public final class VoxyFrame {
                     input.close();
                 }
                 packInputs = new Interop.SharedTexture[0];
-                packTranslucent.close();
                 vxOpaque.close();
                 vxTrans.close();
                 packTargets = null;
@@ -385,10 +380,8 @@ public final class VoxyFrame {
     private static String packKey = "";
     /** Set GL drew into this frame, waiting for the composite before the pack's deferred passes. */
     private static ImageSet pendingPackSet;
-    /** Set whose translucents wait for the end of the pack's deferred passes. */
-    private static ImageSet pendingTranslucentSet;
-    /** Voxy reached its translucent draws this frame and the opaque colour is already in the set. */
-    private static boolean opaqueColourTaken;
+    /** Set that takes a copy of the pack's targets once its deferred passes are done. */
+    private static ImageSet pendingInputSet;
     /** Set whose depth the pack's passes read this frame; its vkDone is signalled with the frame's submit. */
     private static ImageSet packReadSet;
     private static boolean vkDoneAtSubmit;
@@ -450,16 +443,10 @@ public final class VoxyFrame {
             return;
         }
         com.viris.pack.VoxyPackUniforms.update(viewport);
-        opaqueColourTaken = false;
         system.renderOpaque(viewport, packSourceDepth, packSourceColour);
-        int colour = packPipeline.colourIndex();
         for (int i = 0; i < packPipeline.targets.length; i++) {
-            int destination = i == colour && opaqueColourTaken ? set.packTranslucent.glTexture() : set.packTargets[i].glTexture();
             GL45C.glCopyImageSubData(packPipeline.targetTextures[i], GL45C.GL_TEXTURE_2D, 0, 0, 0, 0,
-                destination, GL45C.GL_TEXTURE_2D, 0, 0, 0, 0, width, height, 1);
-        }
-        if (!opaqueColourTaken) {
-            GL45C.glClearTexImage(set.packTranslucent.glTexture(), 0, GL45C.GL_RGBA, GL45C.GL_FLOAT, new float[4]);
+                set.packTargets[i].glTexture(), GL45C.GL_TEXTURE_2D, 0, 0, 0, 0, width, height, 1);
         }
         int[] depths = com.viris.pack.PackPipeline.voxyDepths(packPipeline.data().thePipeline);
         if (depths != null) {
@@ -502,27 +489,17 @@ public final class VoxyFrame {
     /** A set no composite took (the pack skipped its deferred stage) is simply dropped; its semaphores went by. */
     private static void consumeUnusedPackSet() {
         pendingPackSet = null;
-        pendingTranslucentSet = null;
+        pendingInputSet = null;
     }
 
     /**
-     * Between Voxy's opaque and translucent draws. The pack's translucent code samples this depth as vxDepthTex.
-     * Its output must not go through the deferred passes (they would fog water twice, unlike the pack's own water),
-     * so the opaque colour moves into the set and the translucents draw over nothing.
+     * Between Voxy's opaque and translucent draws: the pack's translucent code samples this depth as vxDepthTex.
+     * Its water stays in the colour target, the pack's deferred passes fog it (as they do under Iris).
      */
     public static void beforePackTranslucents(int opaqueDepth) {
-        if (packPipeline == null) {
-            return;
-        }
-        com.viris.pack.DepthConvert.runKeepingState(opaqueDepth, packPipeline.patchDepth, packPipeline.width,
-            packPipeline.height);
-        int colour = packPipeline.colourIndex();
-        if (colour >= 0) {
-            GL45C.glCopyImageSubData(packPipeline.targetTextures[colour], GL45C.GL_TEXTURE_2D, 0, 0, 0, 0,
-                current.packTargets[colour].glTexture(), GL45C.GL_TEXTURE_2D, 0, 0, 0, 0, packPipeline.width,
-                packPipeline.height, 1);
-            GL45C.glClearTexImage(packPipeline.targetTextures[colour], 0, GL45C.GL_RGBA, GL45C.GL_FLOAT, new float[4]);
-            opaqueColourTaken = true;
+        if (packPipeline != null) {
+            com.viris.pack.DepthConvert.runKeepingState(opaqueDepth, packPipeline.patchDepth, packPipeline.width,
+                packPipeline.height);
         }
     }
 
@@ -601,37 +578,23 @@ public final class VoxyFrame {
             pass.setUniform("Lightmap", Minecraft.getInstance().gameRenderer.levelLightmap(), nearest);
             pass.draw(3, 1, 0, 0);
         }
-        pendingTranslucentSet = set;
+        pendingInputSet = set;
     }
 
-    /** Right after the pack's deferred passes (PackChainMixin): LOD water over the lit scene, like the pack's own. */
-    public static void packTranslucents() {
-        ImageSet set = pendingTranslucentSet;
-        pendingTranslucentSet = null;
+    /** Right after the pack's deferred passes (PackChainMixin). */
+    public static void packInputs() {
+        ImageSet set = pendingInputSet;
+        pendingInputSet = null;
         if (set == null || packPipeline == null || failed) {
             return;
         }
         try {
-            GpuTextureView target = com.viris.pack.VitrailBridge.targetAfterDeferred(0);
-            if (target == null) {
-                return;
-            }
             closeVitrailPasses();
-            CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
-            RenderTarget main = Minecraft.getInstance().gameRenderer.mainRenderTarget();
-            CompiledRenderPipeline pipeline = PACK_COMPOSITES.computeIfAbsent("translucent," + target.texture().getFormat(),
-                k -> packTranslucentPipeline(target));
-            GpuSampler nearest = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
-            try (RenderPass pass = encoder.createRenderPass(() -> "Voxy LOD translucents", target, Optional.empty())) {
-                pass.setPipeline(pipeline);
-                pass.setUniform("LodColour", set.packTranslucent.view(), nearest);
-                pass.setUniform("SceneDepth", main.getDepthTextureView(), nearest);
-                pass.draw(3, 1, 0, 0);
-            }
-            copyPackInputs(set, encoder, nearest);
+            copyPackInputs(set, RenderSystem.getDevice().createCommandEncoder(),
+                RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST));
         } catch (RuntimeException e) {
             failed = true;
-            Viris.LOGGER.error("VIRIS: drawing the LODs' translucents failed, LODs stay off for this session", e);
+            Viris.LOGGER.error("VIRIS: copying the pack's targets for the LODs' water failed, LODs stay off for this session", e);
         }
     }
 
@@ -673,32 +636,6 @@ public final class VoxyFrame {
     /** What the patch's sampler reads in the set being drawn. */
     public static int packInputGlTexture(int index) {
         return index < current.packInputs.length ? current.packInputs[index].glTexture() : 0;
-    }
-
-    private static CompiledRenderPipeline packTranslucentPipeline(GpuTextureView target) {
-        String name = "packtranslucent_" + target.texture().getFormat().toString().toLowerCase(java.util.Locale.ROOT);
-        PACK_SHADERS.put(NAMESPACE + ":" + name, """
-            #version 330
-            #extension GL_ARB_separate_shader_objects : require
-            uniform sampler2D LodColour;
-            uniform sampler2D SceneDepth;
-            layout(location = 0) out vec4 colour;
-            void main() {
-                ivec2 p = ivec2(gl_FragCoord.xy);
-                if (texelFetch(SceneDepth, p, 0).r != CLEAR_DEPTH) {
-                    discard;
-                }
-                colour = texelFetch(LodColour, p, 0);
-            }
-            """);
-        return compile(fullscreen(name, BindGroupLayout.builder()
-                .withUniform("LodColour", UniformType.COMBINED_IMAGE_SAMPLER)
-                .withUniform("SceneDepth", UniformType.COMBINED_IMAGE_SAMPLER).build())
-            .withShaderDefine("CLEAR_DEPTH", clearDepth())
-            .withColorTargetState(0, new ColorTargetState(
-                Optional.of(new BlendFunction(BlendFactor.ONE, BlendFactor.ONE_MINUS_SRC_ALPHA)),
-                target.texture().getFormat(), ColorTargetState.WRITE_ALL))
-            .build());
     }
 
     private static CompiledRenderPipeline packCompositePipeline(GpuTextureView[] targets) {

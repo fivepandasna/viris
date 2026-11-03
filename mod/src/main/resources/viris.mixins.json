@@ -24,6 +24,7 @@
     "VulkanGpuTextureAccessor",
     "VulkanGpuTextureMixin",
     "vitrail.EngineDefinesMixin",
+    "vitrail.GeometryProgramMixin",
     "vitrail.PackChainMixin",
     "vitrail.PackPassMixin",
     "vitrail.UniformCatalogMixin"

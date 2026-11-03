@@ -107,7 +107,7 @@ GitHub has no API for it: upload by hand in the repo's Settings, Social preview.
   with all water sides removed, gone with real chunks, probably the LOD seabed's own step seen through the water.
  Exceptions in these hooks would stop Vitrail:
   they only switch the LODs off.
-  Hard edge at the render distance, near water dark/see-through, LOD water hazy (2026-11-03, user's Lunar shots, flying high; NOT fixed): only
+  Hard edge at the render distance, near water dark/see-through, LOD water hazy (2026-11-03, user's Lunar shots, flying high; NOT fixed, user's Unbound in DLSS Optimized has clouds at 400/496 as a workaround): only
   with the camera above the clouds. Reproduced in dev with the user's world (Unbound, RD 12): y 200 pitch 40 edge, y 165 none, y 200 with
   `CLOUD_STYLE_DEFINE=0` none, with `CLOUD_ALT1=400 CLOUD_ALT2=496` none; rain, mods, LOD data, atmospheric fog not the cause. gbuffers_water
   discards water when `colortex5.a` (cloud distance, set where cloud alpha > 0.5) is nearer than the water; LOD water sits in the target

@@ -147,6 +147,7 @@ IHYZKsvL, created 2026-11-01 by API, still waiting for review). New version: POS
 Fabric API required, Vitrail optional), then PATCH /v3/version `client_only`. Gallery: 4 images (retaken 2026-11-02 with DLSS model M; dev world, `gamemode spectator`, `tp @p 0 130 0 -90 10` at time 2000, compare shot without the Voxy and VIRIS jars).
 
 Newest first:
+- v0.3.6 (2026-11-03): LOD water like the pack's own, no seam from clear near water, one surface height. Modrinth MODRINTH_ID_VIRIS.
 - v0.3.5 (2026-11-02): Vulkan first when the Graphics API option is on its default. Modrinth TLmz6juf.
 - v0.3.4 (2026-11-02): own repo, package `com.viris`; no change in the game. Modrinth NbOJ6O8J.
 - v0.3.3 (2026-11-02): LODs survive shader reloads/toggles. Modrinth o1vibgM3.

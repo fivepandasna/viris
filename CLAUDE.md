@@ -79,9 +79,16 @@ GitHub has no API for it: upload by hand in the repo's Settings, Social preview.
   bound in `PackPass.bindSamplers` to Voxy's depth converted to far = 1 (`DepthConvert`). Frame: GL draws at the main
   pass start, Vulkan waits there (after `GeometryHold.flushIdle` + `GraphicsApi.suspendLevelPass`, Vitrail keeps
   passes open), `PackChain.drawBeforeTranslucents` HEAD writes the LOD gbuffer targets into the pack's targets where
-  the scene depth is clear (side = first deferred step's read side), vkDone with the frame's submit. Not yet: pack
-  inputs for the patch (shadow maps, noisetex, colortex13/18/19, depthtex1 are dummies: LODs get no shadows), patch
-  depth samplers during the translucent pass, renderToVanillaDepth packs. Exceptions in these hooks would stop Vitrail:
+  the scene depth is clear (side = first deferred step's read side), vkDone with the frame's submit. Not yet: shadow
+  maps and depthtex for the patch (dummies: LODs get no shadows), renderToVanillaDepth packs.
+  LOD water (2026-11-03, user: "after the line it is just blue", black line at the LOD start): the translucent patch had
+  an empty vxDepthTex, black noisetex and reflection colours. Now: `postOpaquePreTranslucent` TAIL converts Voxy's opaque
+  depth into `patchDepth` and moves the opaque colour into the set, translucents draw over nothing into
+  `packTranslucent` and go over the lit scene at `drawBeforeTranslucents` TAIL (before deferred they were fogged twice);
+  noisetex and `texture.gbuffers.*` PNGs come from the pack (`customTexture`); other colortexN/gauxN samplers are copied
+  from Vulkan after deferred into `packInputs` and read when the set comes round (3 frames old, so reflections lag slightly
+  in motion). Black shores were reflections of black. Left: a faint brightness step at the render distance edge
+  with Complementary; horizon lines not seen again from y 72/110 by day or at night. Exceptions in these hooks would stop Vitrail:
   they only switch the LODs off.
   Ghost LODs (0.3.1, 2026-11-01, user's server shot): switching Voxy off in its settings calls
   `voxy$shutdownRenderer`, `IVoxyRenderSystemHolder.getNullable()` turns null and VoxyFrame drew nothing, but

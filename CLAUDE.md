@@ -141,6 +141,12 @@ GitHub has no API for it: upload by hand in the repo's Settings, Social preview.
   that as sampler2D) and its patch has `#if A \` + `|| B`: both read now. Separate Vitrail issue: Photon's default
   `BLOOM_UPSAMPLING_FILTER texture` becomes `ofTexture` (composite14 fails, whole pack dropped);
   `BLOOM_UPSAMPLING_FILTER=bicubic_filter` in the pack's .txt avoids it. Verified in dev (pack + LODs drawn, no errors) and by the user in Lunar on a server.
+  Same day, LODs were dark outlines only (user's Lunar shot, reproduced in dev with Photon TAA on, RD 6, y 150): Vitrail's
+  scene seed (`PackChain.paintSeed` -> `SceneSeed`) copies the game's picture into the pack's first draw buffer wherever no
+  block was drawn, after VIRIS' LOD copy; for Photon that buffer is colortex1 = the LOD gbuffer, so the lighting pass saw
+  albedo 0 (fog over bare depth). Now `PackChainMixin` copies the LODs again after `paintSeed`. Also LOD targets are
+  RGBA32F (GL patch targets, shared targets, inputs): Photon packs 2x8 bits into RGBA16 unorm, RGBA16F cut them.
+  `-Dviris.glDebug=true` logs GL errors with the Java stack. Open: Photon's LOD water isn't drawn (seabed shows).
 
 ## Releases
 

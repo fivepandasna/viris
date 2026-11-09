@@ -55,6 +55,17 @@ public final class GlContext {
             GL45C.glClipControl(GL45C.GL_LOWER_LEFT, GL45C.GL_ZERO_TO_ONE);
         }
         capabilities = caps;
+        if (Boolean.getBoolean("viris.glDebug")) {
+            // Dev: every GL error with the Java stack that caused it.
+            GL45C.glEnable(GL45C.GL_DEBUG_OUTPUT);
+            GL45C.glEnable(GL45C.GL_DEBUG_OUTPUT_SYNCHRONOUS);
+            GL45C.glDebugMessageCallback((source, type, id, severity, length, message, user) -> {
+                if (type == GL45C.GL_DEBUG_TYPE_ERROR) {
+                    Viris.LOGGER.warn("VIRIS GL: {}", org.lwjgl.opengl.GLDebugMessageCallback.getMessage(length, message),
+                        new Throwable());
+                }
+            }, 0L);
+        }
         Viris.LOGGER.info("VIRIS: OpenGL context {} on {}", GL45C.glGetString(GL45C.GL_VERSION),
             GL45C.glGetString(GL45C.GL_RENDERER));
         return true;

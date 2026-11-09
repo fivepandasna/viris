@@ -15,6 +15,12 @@ public class PackChainMixin {
         VoxyFrame.packComposite();
     }
 
+    /** The scene seed paints the game's picture over the LODs in the pack's first draw buffer: write them again. */
+    @Inject(method = "paintSeed", at = @At("TAIL"))
+    private void viris$lodGbufferAfterSeed(CallbackInfo ci) {
+        VoxyFrame.afterSceneSeed();
+    }
+
     @Inject(method = "drawBeforeTranslucents", at = @At("TAIL"))
     private static void viris$packInputs(CallbackInfo ci) {
         VoxyFrame.packInputs();

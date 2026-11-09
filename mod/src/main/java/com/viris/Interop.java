@@ -114,6 +114,11 @@ public final class Interop {
     }
 
     public static SharedTexture createTexture(String label, int usage, GpuFormat format, int glFormat, int width, int height) {
+        int stale = GL45C.glGetError();
+        if (stale != 0) {
+            // An earlier call's error, not this import's (-Dviris.glDebug=true names it).
+            Viris.LOGGER.warn("VIRIS: GL error {} left before importing {}", stale, label);
+        }
         GpuTexture texture;
         exportNext = true;
         try {

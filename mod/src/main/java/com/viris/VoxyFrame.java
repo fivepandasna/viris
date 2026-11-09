@@ -212,11 +212,11 @@ public final class VoxyFrame {
             int usage = GpuTexture.USAGE_RENDER_ATTACHMENT | GpuTexture.USAGE_TEXTURE_BINDING;
             packTargets = new Interop.SharedTexture[count];
             for (int i = 0; i < count; i++) {
-                packTargets[i] = Interop.createTexture("Voxy pack target", usage, GpuFormat.RGBA16_FLOAT, GL45C.GL_RGBA16F, width, height);
+                packTargets[i] = Interop.createTexture("Voxy pack target", usage, GpuFormat.RGBA32_FLOAT, GL45C.GL_RGBA32F, width, height);
             }
             packInputs = new Interop.SharedTexture[inputs];
             for (int i = 0; i < inputs; i++) {
-                packInputs[i] = Interop.createTexture("Voxy pack input", usage, GpuFormat.RGBA16_FLOAT, GL45C.GL_RGBA16F, width, height);
+                packInputs[i] = Interop.createTexture("Voxy pack input", usage, GpuFormat.RGBA32_FLOAT, GL45C.GL_RGBA32F, width, height);
             }
             vxOpaque = Interop.createTexture("Voxy depth opaque", usage, GpuFormat.R32_FLOAT, GL45C.GL_R32F, width, height);
             vxTrans = Interop.createTexture("Voxy depth translucent", usage, GpuFormat.R32_FLOAT, GL45C.GL_R32F, width, height);
@@ -528,7 +528,9 @@ public final class VoxyFrame {
             return;
         }
         try {
-            compositePack();
+            ImageSet set = pendingPackSet;
+            pendingPackSet = null;
+            compositePack(set, true);
         } catch (RuntimeException e) {
             // An exception here would stop Vitrail drawing the pack: only the LODs go off.
             failed = true;
@@ -538,9 +540,25 @@ public final class VoxyFrame {
         }
     }
 
-    private static void compositePack() {
-        ImageSet set = pendingPackSet;
-        pendingPackSet = null;
+    /**
+     * After Vitrail's scene seed (PackChainMixin): the seed copies the game's picture into the pack's first draw
+     * buffer wherever no block was drawn, over the LODs when that buffer is their gbuffer (Photon's colortex1),
+     * so the LODs go in again on top.
+     */
+    public static void afterSceneSeed() {
+        if (packReadSet == null || packPipeline == null || failed) {
+            return;
+        }
+        try {
+            compositePack(packReadSet, false);
+        } catch (RuntimeException e) {
+            failed = true;
+            packReadSet = null;
+            Viris.LOGGER.error("VIRIS: writing the LODs into the shader pack failed, LODs stay off for this session", e);
+        }
+    }
+
+    private static void compositePack(ImageSet set, boolean withLightmap) {
         closeVitrailPasses();
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
         RenderTarget main = Minecraft.getInstance().gameRenderer.mainRenderTarget();
@@ -572,6 +590,9 @@ public final class VoxyFrame {
             pass.setUniform("LodTrans", set.vxTrans.view(), nearest);
             pass.setUniform("SceneDepth", main.getDepthTextureView(), nearest);
             pass.draw(3, 1, 0, 0);
+        }
+        if (!withLightmap) {
+            return;
         }
         try (RenderPass pass = encoder.createRenderPass(() -> "Voxy lightmap", set.lightmap.view(), Optional.empty())) {
             pass.setPipeline(lightmapPipeline);
@@ -629,7 +650,7 @@ public final class VoxyFrame {
             """);
         return compile(fullscreen("packinput", BindGroupLayout.builder()
                 .withUniform("Source", UniformType.COMBINED_IMAGE_SAMPLER).build())
-            .withColorTargetState(0, new ColorTargetState(Optional.empty(), GpuFormat.RGBA16_FLOAT, ColorTargetState.WRITE_ALL))
+            .withColorTargetState(0, new ColorTargetState(Optional.empty(), GpuFormat.RGBA32_FLOAT, ColorTargetState.WRITE_ALL))
             .build());
     }
 

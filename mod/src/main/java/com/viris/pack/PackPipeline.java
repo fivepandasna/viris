@@ -73,7 +73,7 @@ public final class PackPipeline {
         this.targets = all.stream().mapToInt(Integer::intValue).toArray();
         this.targetTextures = new int[targets.length];
         for (int i = 0; i < targets.length; i++) {
-            targetTextures[i] = texture(GL45C.GL_RGBA16F, width, height);
+            targetTextures[i] = texture(GL45C.GL_RGBA32F, width, height); // 32-bit: packs pack 2x8 bits into 16-bit unorm (Photon)
         }
         this.patchDepth = texture(GL45C.GL_R32F, width, height);
         this.data = buildData();

@@ -121,15 +121,22 @@ public record PackPatch(
             }
         }
         List<String> lines = unit.lines();
+        boolean continuation = false;
         for (int i = 0; i < lines.size(); i++) {
             if (!unit.isLive(i)) {
                 continue;
             }
             String line = lines.get(i);
+            if (continuation) {
+                // rest of a settled directive split with '\' (Photon: "#if A \" + "|| B")
+                continuation = line.stripTrailing().endsWith("\\");
+                continue;
+            }
             String trimmed = line.stripLeading();
             if (trimmed.startsWith("#")) {
                 String directive = trimmed.substring(1).stripLeading();
                 if (!glsl || !(directive.startsWith("define") || directive.startsWith("undef"))) {
+                    continuation = line.stripTrailing().endsWith("\\");
                     continue;
                 }
             }
@@ -203,10 +210,20 @@ public record PackPatch(
     private static Map<String, String> samplers(JsonObject data) {
         Map<String, String> out = new LinkedHashMap<>();
         JsonElement element = data.get("samplers");
-        if (element != null && element.isJsonObject()) {
-            element.getAsJsonObject().entrySet().forEach(entry -> out.put(entry.getKey(), entry.getValue().getAsString()));
+        // As Voxy reads it: a list of names (Photon) or name -> type; no type = sampler2D.
+        if (element != null && element.isJsonArray()) {
+            element.getAsJsonArray().forEach(item -> out.put(item.getAsString(), samplerType(item.getAsString(), null)));
+        } else if (element != null && element.isJsonObject()) {
+            element.getAsJsonObject().entrySet().forEach(entry -> out.put(entry.getKey(), samplerType(entry.getKey(), entry.getValue())));
         }
         return out;
+    }
+
+    private static String samplerType(String name, JsonElement type) {
+        if (type != null && !type.isJsonNull()) {
+            return type.getAsString();
+        }
+        return name.matches("shadowtex") ? "sampler2DShadow" : "sampler2D";
     }
 
     /** Buffer index (-1 = all) -> "off" or "SRC DST SRC_A DST_A". */

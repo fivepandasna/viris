@@ -135,6 +135,12 @@ GitHub has no API for it: upload by hand in the repo's Settings, Social preview.
   colour. SIRIS 1.1.4 keeps the reload when `viris` is loaded. Reproduced and verified with `-PtestRejoin=300`. A
   delayed VIRIS pipeline rebuild after join did not help (dropped). Sky light from Voxy Server Side is not the cause.
   Voxy is All-Rights-Reserved: never pack or modify its jar (runtime mixins only).
+- Photon 1.4 (2026-11-09, 0.3.7, user's Lunar profile `just-optimized`): `PackPassMixin` bound a null vxDepthTex view in
+  Photon's prepare passes (before Voxy's first frame), Vitrail threw `textureView and sampler must both or neither be null`
+  and stopped the pack (vanilla look); now Vitrail's stand-in stays. Its voxy.json lists `samplers` as names (Voxy reads
+  that as sampler2D) and its patch has `#if A \` + `|| B`: both read now. Separate Vitrail issue: Photon's default
+  `BLOOM_UPSAMPLING_FILTER texture` becomes `ofTexture` (composite14 fails, whole pack dropped);
+  `BLOOM_UPSAMPLING_FILTER=bicubic_filter` in the pack's .txt avoids it. Verified in dev (pack + LODs drawn, no errors).
 
 ## Releases
 

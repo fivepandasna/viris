@@ -140,7 +140,7 @@ GitHub has no API for it: upload by hand in the repo's Settings, Social preview.
   and stopped the pack (vanilla look); now Vitrail's stand-in stays. Its voxy.json lists `samplers` as names (Voxy reads
   that as sampler2D) and its patch has `#if A \` + `|| B`: both read now. Separate Vitrail issue: Photon's default
   `BLOOM_UPSAMPLING_FILTER texture` becomes `ofTexture` (composite14 fails, whole pack dropped);
-  `BLOOM_UPSAMPLING_FILTER=bicubic_filter` in the pack's .txt avoids it. Verified in dev (pack + LODs drawn, no errors).
+  `BLOOM_UPSAMPLING_FILTER=bicubic_filter` in the pack's .txt avoids it. Verified in dev (pack + LODs drawn, no errors) and by the user in Lunar on a server.
 
 ## Releases
 

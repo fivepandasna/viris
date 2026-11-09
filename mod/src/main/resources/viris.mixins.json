@@ -29,7 +29,8 @@
     "vitrail.GeometryProgramMixin",
     "vitrail.PackChainMixin",
     "vitrail.PackPassMixin",
-    "vitrail.UniformCatalogMixin"
+    "vitrail.UniformCatalogMixin",
+    "vitrail.VitrailLoggerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

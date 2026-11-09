@@ -330,7 +330,11 @@ public final class PackPipeline {
             return () -> depth;
         }
         if (name.startsWith("depthtex") || name.startsWith("shadowtex")) {
-            int far = dummy(GL45C.GL_R32F, new float[] {1, 1, 1, 1});
+            // Screen sized: Photon texelFetches depthtex1 per pixel, and outside a 1x1 texture that reads 0
+            // ("a block in front"), so its LOD water was discarded everywhere.
+            int far = texture(GL45C.GL_R32F, width, height);
+            GL45C.glClearTexImage(far, 0, GL45C.GL_RED, GL45C.GL_FLOAT, new float[] {1});
+            dummies.add(far);
             return () -> far;
         }
         if (name.startsWith("shadowcolor")) {

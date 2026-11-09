@@ -146,7 +146,9 @@ GitHub has no API for it: upload by hand in the repo's Settings, Social preview.
   block was drawn, after VIRIS' LOD copy; for Photon that buffer is colortex1 = the LOD gbuffer, so the lighting pass saw
   albedo 0 (fog over bare depth). Now `PackChainMixin` copies the LODs again after `paintSeed`. Also LOD targets are
   RGBA32F (GL patch targets, shared targets, inputs): Photon packs 2x8 bits into RGBA16 unorm, RGBA16F cut them.
-  `-Dviris.glDebug=true` logs GL errors with the Java stack. Open: Photon's LOD water isn't drawn (seabed shows).
+  `-Dviris.glDebug=true` logs GL errors with the Java stack. LOD water was missing: Photon's voxy_translucent discards
+  where `texelFetch(depthtex1, gl_FragCoord)` < 1, and the patch's depthtex/shadowtex stand-in was 1x1 (0 outside it).
+  Now screen sized, far = 1. Photon water verified in dev against a no-Voxy RD 24 shot; Complementary unchanged.
 
 ## Releases
 

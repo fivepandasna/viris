@@ -150,9 +150,11 @@ GitHub has no API for it: upload by hand in the repo's Settings, Social preview.
   where `texelFetch(depthtex1, gl_FragCoord)` < 1, and the patch's depthtex/shadowtex stand-in was 1x1 (0 outside it).
   Now screen sized, far = 1. Photon water verified in dev against a no-Voxy RD 24 shot; Complementary unchanged.
 - Lunar drops Vitrail's log lines; since 2026-11-09 VIRIS copies them to `logs/vitrail.log` in Lunar's profile
-  (`LunarVitrailLog`, wraps `Vitrail.logger()`; `-Dviris.vitrailLog=true` in dev). Open: mobs and the hand glow with
-  Photon in Lunar only (probe pack: entities get full block light, terrain doesn't; singleplayer too; dev with the
-  same mods is correct, shaders on at start or toggled alike).
+  (`LunarVitrailLog`, wraps `Vitrail.logger()`; `-Dviris.vitrailLog=true` in dev). Mobs and the hand glowing with
+  Photon in Lunar (2026-11-09) were Lunar's Fullbright mod: it gives entities full block light, Photon reads that as
+  fire (`light_levels.x > 0.99` -> emissive). Not ours; Fullbright off fixes it (user confirmed). Diagnose such cases
+  with a pack copy that tints entities by `light_levels`; `-Dmixin.debug.export=true` can be set per Lunar profile in
+  `db/profiles.db` column `jvm_arguments` (launcher closed).
 
 ## Releases
 

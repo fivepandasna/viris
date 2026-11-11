@@ -71,11 +71,23 @@ public final class Interop {
             && frontend.viris$backend() instanceof VulkanDevice vulkan ? vulkan : null;
     }
 
-    /** The device was created with the Win32 external memory and semaphore extensions. */
+    /** The Vulkan device extensions the interop needs: Win32 handles on Windows, file descriptors on Linux. */
+    public static String[] vulkanExtensions() {
+        return WINDOWS
+            ? new String[] {"VK_KHR_external_memory_win32", "VK_KHR_external_semaphore_win32"}
+            : new String[] {"VK_KHR_external_memory_fd", "VK_KHR_external_semaphore_fd"};
+    }
+
+    /** The device was created with the external memory and semaphore extensions for this OS. */
     public static boolean supported() {
         VulkanDevice device = device();
-        return device != null && device.vkDevice().getCapabilities().VK_KHR_external_memory_win32
-            && device.vkDevice().getCapabilities().VK_KHR_external_semaphore_win32;
+        if (device == null) {
+            return false;
+        }
+        var caps = device.vkDevice().getCapabilities();
+        return WINDOWS
+            ? caps.VK_KHR_external_memory_win32 && caps.VK_KHR_external_semaphore_win32
+            : caps.VK_KHR_external_memory_fd && caps.VK_KHR_external_semaphore_fd;
     }
 
     public static boolean exportingNext() {

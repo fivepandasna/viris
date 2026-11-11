@@ -43,6 +43,9 @@ public class VirisMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (!Viris.interopOs()) {
+            return false; // macOS and others: no interop here, leave Voxy untouched
+        }
         if (mixinClassName.contains(".mixin.vitrail.")) {
             return FabricLoader.getInstance().isModLoaded("voxy") && FabricLoader.getInstance().isModLoaded("vitrail");
         }

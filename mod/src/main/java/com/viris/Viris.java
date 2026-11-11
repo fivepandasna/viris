@@ -22,6 +22,12 @@ public final class Viris implements ClientModInitializer {
     public void onInitializeClient() {
     }
 
+    /** The OSes the interop is written for: NT handles on Windows, file descriptors on Linux. */
+    public static boolean interopOs() {
+        String os = System.getProperty("os.name", "");
+        return os.startsWith("Windows") || os.startsWith("Linux");
+    }
+
     /** The game renders through Vulkan (known once the graphics device exists). */
     public static boolean isVulkan() {
         if (vulkan == null) {

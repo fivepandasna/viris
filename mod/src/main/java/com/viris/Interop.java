@@ -13,8 +13,10 @@ import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.opengl.EXTMemoryObject;
+import org.lwjgl.opengl.EXTMemoryObjectFD;
 import org.lwjgl.opengl.EXTMemoryObjectWin32;
 import org.lwjgl.opengl.EXTSemaphore;
+import org.lwjgl.opengl.EXTSemaphoreFD;
 import org.lwjgl.opengl.EXTSemaphoreWin32;
 import org.lwjgl.opengl.GL45C;
 import org.lwjgl.system.JNI;
@@ -24,7 +26,9 @@ import org.lwjgl.util.vma.Vma;
 import org.lwjgl.util.vma.VmaAllocationCreateInfo;
 import org.lwjgl.util.vma.VmaAllocationInfo;
 import org.lwjgl.util.vma.VmaPoolCreateInfo;
+import org.lwjgl.vulkan.KHRExternalMemoryFd;
 import org.lwjgl.vulkan.KHRExternalMemoryWin32;
+import org.lwjgl.vulkan.KHRExternalSemaphoreFd;
 import org.lwjgl.vulkan.KHRExternalSemaphoreWin32;
 import org.lwjgl.vulkan.VK11;
 import org.lwjgl.vulkan.VkDevice;
@@ -32,19 +36,24 @@ import org.lwjgl.vulkan.VkExportMemoryAllocateInfo;
 import org.lwjgl.vulkan.VkExternalMemoryImageCreateInfo;
 import org.lwjgl.vulkan.VkImageCreateInfo;
 import org.lwjgl.vulkan.VkExportSemaphoreCreateInfo;
+import org.lwjgl.vulkan.VkMemoryGetFdInfoKHR;
 import org.lwjgl.vulkan.VkMemoryGetWin32HandleInfoKHR;
 import org.lwjgl.vulkan.VkSemaphoreCreateInfo;
+import org.lwjgl.vulkan.VkSemaphoreGetFdInfoKHR;
 import org.lwjgl.vulkan.VkSemaphoreGetWin32HandleInfoKHR;
 
 /**
  * Vulkan images and semaphores that the OpenGL context imports (EXT_memory_object_win32 /
- * EXT_semaphore_win32). The images are ordinary RenderPearl textures whose memory comes from a VMA pool
+ * EXT_semaphore_win32 on Windows, EXT_memory_object_fd / EXT_semaphore_fd on Linux). The images are ordinary RenderPearl textures whose memory comes from a VMA pool
  * of exportable dedicated allocations ({@code VulkanGpuTextureMixin}), so the game samples them like any
  * other texture while Voxy's GL code draws into them.
  */
 public final class Interop {
 
-    private static final int HANDLE_OPAQUE_WIN32 = 0x2;
+    /** Windows shares NT handles, Linux file descriptors. */
+    public static final boolean WINDOWS = System.getProperty("os.name", "").startsWith("Windows");
+    /** VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT / _OPAQUE_FD_BIT (the semaphore bits have the same values). */
+    private static final int HANDLE_OPAQUE = WINDOWS ? 0x2 : 0x1;
     private static final int VMA_DEDICATED = Vma.VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
 
     /** Set while a shared texture is created: its image gets exportable memory. */
@@ -76,7 +85,7 @@ public final class Interop {
     /** Called from VulkanGpuTextureMixin right before vmaCreateImage of a shared texture. */
     public static void prepareExport(long vma, VkImageCreateInfo image, VmaAllocationCreateInfo allocation, MemoryStack stack) {
         VkExternalMemoryImageCreateInfo external = VkExternalMemoryImageCreateInfo.calloc(stack).sType$Default()
-            .handleTypes(HANDLE_OPAQUE_WIN32);
+            .handleTypes(HANDLE_OPAQUE);
         external.pNext(image.pNext());
         image.pNext(external.address());
         IntBuffer typeIndex = stack.mallocInt(1);
@@ -87,7 +96,7 @@ public final class Interop {
         long pool = POOLS.get(typeIndex.get(0));
         if (pool == 0L) {
             if (exportAllocate == null) {
-                exportAllocate = VkExportMemoryAllocateInfo.calloc().sType$Default().handleTypes(HANDLE_OPAQUE_WIN32);
+                exportAllocate = VkExportMemoryAllocateInfo.calloc().sType$Default().handleTypes(HANDLE_OPAQUE);
             }
             VmaPoolCreateInfo poolInfo = VmaPoolCreateInfo.calloc(stack).memoryTypeIndex(typeIndex.get(0))
                 .pMemoryAllocateNext(exportAllocate.address());
@@ -130,20 +139,34 @@ public final class Interop {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             VmaAllocationInfo info = VmaAllocationInfo.calloc(stack);
             Vma.vmaGetAllocationInfo(device.vma(), ((VulkanGpuTextureAccessor) texture).viris$vmaAllocation(), info);
-            VkMemoryGetWin32HandleInfoKHR handleInfo = VkMemoryGetWin32HandleInfoKHR.calloc(stack).sType$Default()
-                .memory(info.deviceMemory()).handleType(HANDLE_OPAQUE_WIN32);
-            PointerBuffer handle = stack.mallocPointer(1);
-            check(KHRExternalMemoryWin32.vkGetMemoryWin32HandleKHR(device.vkDevice(), handleInfo, handle), "memory handle");
             // Dedicated allocation: the memory object is exactly this image, at offset 0.
             long size = info.offset() + info.size();
             int memory = EXTMemoryObject.glCreateMemoryObjectsEXT();
             EXTMemoryObject.glMemoryObjectParameterivEXT(memory, EXTMemoryObject.GL_DEDICATED_MEMORY_OBJECT_EXT,
                 new int[] {GL45C.GL_TRUE});
-            EXTMemoryObjectWin32.glImportMemoryWin32HandleEXT(memory, size,
-                EXTMemoryObjectWin32.GL_HANDLE_TYPE_OPAQUE_WIN32_EXT, handle.get(0));
+            long winHandle = 0L;
+            if (WINDOWS) {
+                VkMemoryGetWin32HandleInfoKHR handleInfo = VkMemoryGetWin32HandleInfoKHR.calloc(stack).sType$Default()
+                    .memory(info.deviceMemory()).handleType(HANDLE_OPAQUE);
+                PointerBuffer handle = stack.mallocPointer(1);
+                check(KHRExternalMemoryWin32.vkGetMemoryWin32HandleKHR(device.vkDevice(), handleInfo, handle), "memory handle");
+                EXTMemoryObjectWin32.glImportMemoryWin32HandleEXT(memory, size,
+                    EXTMemoryObjectWin32.GL_HANDLE_TYPE_OPAQUE_WIN32_EXT, handle.get(0));
+                winHandle = handle.get(0);
+            } else {
+                VkMemoryGetFdInfoKHR fdInfo = VkMemoryGetFdInfoKHR.calloc(stack).sType$Default()
+                    .memory(info.deviceMemory()).handleType(HANDLE_OPAQUE);
+                IntBuffer fd = stack.mallocInt(1);
+                check(KHRExternalMemoryFd.vkGetMemoryFdKHR(device.vkDevice(), fdInfo, fd), "memory handle");
+                // OpenGL owns the descriptor after the import (unlike a Win32 handle): it must not be closed here.
+                EXTMemoryObjectFD.glImportMemoryFdEXT(memory, size, EXTMemoryObjectFD.GL_HANDLE_TYPE_OPAQUE_FD_EXT,
+                    fd.get(0));
+            }
             int glTexture = GL45C.glCreateTextures(GL45C.GL_TEXTURE_2D);
             EXTMemoryObject.glTextureStorageMem2DEXT(glTexture, 1, glFormat, width, height, memory, info.offset());
-            closeHandle(handle.get(0));
+            if (winHandle != 0L) {
+                closeHandle(winHandle);
+            }
             int error = GL45C.glGetError();
             if (error != 0) {
                 throw new IllegalStateException("VIRIS: OpenGL could not import " + label + " (GL error " + error + ")");
@@ -157,18 +180,27 @@ public final class Interop {
         VkDevice device = device().vkDevice();
         try (MemoryStack stack = MemoryStack.stackPush()) {
             VkExportSemaphoreCreateInfo export = VkExportSemaphoreCreateInfo.calloc(stack).sType$Default()
-                .handleTypes(HANDLE_OPAQUE_WIN32);
+                .handleTypes(HANDLE_OPAQUE);
             VkSemaphoreCreateInfo info = VkSemaphoreCreateInfo.calloc(stack).sType$Default().pNext(export.address());
             LongBuffer semaphore = stack.mallocLong(1);
             check(VK11.vkCreateSemaphore(device, info, null, semaphore), "semaphore");
-            VkSemaphoreGetWin32HandleInfoKHR handleInfo = VkSemaphoreGetWin32HandleInfoKHR.calloc(stack).sType$Default()
-                .semaphore(semaphore.get(0)).handleType(HANDLE_OPAQUE_WIN32);
-            PointerBuffer handle = stack.mallocPointer(1);
-            check(KHRExternalSemaphoreWin32.vkGetSemaphoreWin32HandleKHR(device, handleInfo, handle), "semaphore handle");
             int glSemaphore = EXTSemaphore.glGenSemaphoresEXT();
-            EXTSemaphoreWin32.glImportSemaphoreWin32HandleEXT(glSemaphore, EXTSemaphoreWin32.GL_HANDLE_TYPE_OPAQUE_WIN32_EXT,
-                handle.get(0));
-            closeHandle(handle.get(0));
+            if (WINDOWS) {
+                VkSemaphoreGetWin32HandleInfoKHR handleInfo = VkSemaphoreGetWin32HandleInfoKHR.calloc(stack).sType$Default()
+                    .semaphore(semaphore.get(0)).handleType(HANDLE_OPAQUE);
+                PointerBuffer handle = stack.mallocPointer(1);
+                check(KHRExternalSemaphoreWin32.vkGetSemaphoreWin32HandleKHR(device, handleInfo, handle), "semaphore handle");
+                EXTSemaphoreWin32.glImportSemaphoreWin32HandleEXT(glSemaphore, EXTSemaphoreWin32.GL_HANDLE_TYPE_OPAQUE_WIN32_EXT,
+                    handle.get(0));
+                closeHandle(handle.get(0));
+            } else {
+                VkSemaphoreGetFdInfoKHR fdInfo = VkSemaphoreGetFdInfoKHR.calloc(stack).sType$Default()
+                    .semaphore(semaphore.get(0)).handleType(HANDLE_OPAQUE);
+                IntBuffer fd = stack.mallocInt(1);
+                check(KHRExternalSemaphoreFd.vkGetSemaphoreFdKHR(device, fdInfo, fd), "semaphore handle");
+                // Ownership of the descriptor passes to OpenGL.
+                EXTSemaphoreFD.glImportSemaphoreFdEXT(glSemaphore, EXTSemaphoreFD.GL_HANDLE_TYPE_OPAQUE_FD_EXT, fd.get(0));
+            }
             return new long[] {semaphore.get(0), glSemaphore};
         }
     }
